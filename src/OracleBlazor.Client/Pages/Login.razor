@@ -1,0 +1,23 @@
+@page "/login"
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<h3>Giriş</h3>
+
+<input @bind="username" placeholder="Kullanıcı adı" />
+<input @bind="password" placeholder="Şifre" type="password" />
+<button @onclick="DoLogin">Giriş Yap</button>
+
+<p>@error</p>
+
+@code {
+    string? username, password, error;
+
+    async Task DoLogin()
+    {
+        error = null;
+        var ok = await Auth.LoginAsync(username!, password!);
+        if (ok) Nav.NavigateTo("/");
+        else error = "Giriş başarısız.";
+    }
+}

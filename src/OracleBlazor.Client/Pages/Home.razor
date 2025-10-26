@@ -1,0 +1,378 @@
+﻿@attribute [Authorize]
+@page "/"
+@using Microsoft.AspNetCore.Authorization
+@using OracleBlazor.Client.Services
+@using OracleBlazor.Core.Entities
+@using OracleBlazor.Core.Filter
+@using System.ComponentModel.DataAnnotations
+@using OracleBlazor.Client.DTOs
+@using System.Globalization
+
+@inject AssetsService Api
+
+<PageTitle>Assets</PageTitle>
+
+<h1>Assets</h1>
+
+<div class="card mb-3 p-3">
+    <EditForm Model="@filter" OnValidSubmit="OnSubmit">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-sm-4">
+                <label class="form-label">Kategori</label>
+                <InputSelect @bind-Value="filter.Category" class="form-select" TValue="AssetCategory?">
+                    <option value="">Hepsi</option>
+                    @foreach (var v in Enum.GetValues<AssetCategory>())
+                    {
+                        <option value="@v">@v</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-12 col-sm-4">
+                <label class="form-label">Location</label>
+                <InputSelect @bind-Value="filter.Location" class="form-select" TValue="AssetLocation?">
+                    <option value="">Hepsi</option>
+                    @foreach (var v in Enum.GetValues<AssetLocation>())
+                    {
+                        <option value="@v">@v</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-12 col-sm-4">
+                <label class="form-label">Status</label>
+                <InputSelect @bind-Value="filter.Status" class="form-select" TValue="AssetStatus?">
+                    <option value="">Hepsi</option>
+                    @foreach (var v in Enum.GetValues<AssetStatus>())
+                    {
+                        <option value="@v">@v</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-12 col-sm-8">
+                <label class="form-label">Arama</label>
+                <InputText @bind-Value="filter.Name" class="form-control" placeholder="Ad, etiket..." />
+            </div>
+
+            <div class="col-12 col-sm-4 text-sm-end">
+                <button type="submit" class="btn btn-primary me-2">Uygula</button>
+                <button type="button" class="btn btn-outline-secondary" @onclick="ClearFilters">Temizle</button>
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@if (loading)
+{
+    <p>Yükleniyor…</p>
+}
+else if (!string.IsNullOrWhiteSpace(error))
+{
+    <p class="text-danger">@error</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Ad</th>
+                <th>Etiket</th>
+                <th>Kategori</th>
+                <th>Lokasyon</th>
+                <th>Durum</th>
+                <th>Alış Tarihi</th>
+                <th>Maliyet</th>
+                <th>Aktif</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in assets)
+            {
+                <tr>
+                    <td>@a.Name</td>
+                    <td>@a.Tag</td>
+                    <td>@a.Category</td>
+                    <td>@a.Location</td>
+                    <td>@a.Status</td>
+                    <td>@a.PurchaseDate?.ToString("yyyy-MM-dd")</td>
+                    <td>@a.Cost?.ToString("C2", CultureInfo.CurrentCulture)</td>
+                    <td>@(a.IsActive ? "Evet" : "Hayır")</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary me-2" @onclick="@(() => StartEdit(a))">Düzenle</button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="@(() => Delete(a))">Sil</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (editModel is null)
+    {
+        <div class="card mt-3 p-3">
+            <h5 class="mb-3">Yeni Varlık Ekle</h5>
+            <EditForm Model="@createModel" OnValidSubmit="CreateAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="row g-2">
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Etiket</label>
+                        <InputText class="form-control" @bind-Value="createModel.Tag" />
+                        <ValidationMessage For="@(() => createModel.Tag)" />
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Ad</label>
+                        <InputText class="form-control" @bind-Value="createModel.Name" />
+                        <ValidationMessage For="@(() => createModel.Name)" />
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Kategori</label>
+                        <InputSelect class="form-select" @bind-Value="createModel.Category" TValue="AssetCategory?">
+                            <option value="">Seçiniz</option>
+                            @foreach (var v in Enum.GetValues<AssetCategory>())
+                            {
+                                <option value="@v">@v</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Durum</label>
+                        <InputSelect class="form-select" @bind-Value="createModel.Status" TValue="AssetStatus?">
+                            <option value="">Seçiniz</option>
+                            @foreach (var v in Enum.GetValues<AssetStatus>())
+                            {
+                                <option value="@v">@v</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Lokasyon</label>
+                        <InputSelect class="form-select" @bind-Value="createModel.Location" TValue="AssetLocation?">
+                            <option value="">Seçiniz</option>
+                            @foreach (var v in Enum.GetValues<AssetLocation>())
+                            {
+                                <option value="@v">@v</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Alış Tarihi</label>
+                        <InputDate class="form-control" @bind-Value="createModel.PurchaseDate" TValue="DateTime?" DateFormat="yyyy-MM-dd" />
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Maliyet</label>
+                        <InputNumber class="form-control" @bind-Value="createModel.Cost" TValue="decimal?" />
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success">Ekle</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+    else
+    {
+        <div class="card mt-3 p-3 border-primary">
+            <h5 class="mb-3">Varlığı Düzenle</h5>
+            <EditForm Model="@editModel" OnValidSubmit="SaveEditAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="row g-2">
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Etiket</label>
+                        <InputText class="form-control" @bind-Value="editModel.Tag" />
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Ad</label>
+                        <InputText class="form-control" @bind-Value="editModel.Name" />
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Kategori</label>
+                        <InputSelect class="form-select" @bind-Value="editModel.Category" TValue="AssetCategory?">
+                            <option value="">Seçiniz</option>
+                            @foreach (var v in Enum.GetValues<AssetCategory>())
+                            {
+                                <option value="@v">@v</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Durum</label>
+                        <InputSelect class="form-select" @bind-Value="editModel.Status" TValue="AssetStatus?">
+                            <option value="">Seçiniz</option>
+                            @foreach (var v in Enum.GetValues<AssetStatus>())
+                            {
+                                <option value="@v">@v</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Lokasyon</label>
+                        <InputSelect class="form-select" @bind-Value="editModel.Location" TValue="AssetLocation?">
+                            <option value="">Seçiniz</option>
+                            @foreach (var v in Enum.GetValues<AssetLocation>())
+                            {
+                                <option value="@v">@v</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Alış Tarihi</label>
+                        <InputDate class="form-control" @bind-Value="editModel.PurchaseDate" TValue="DateTime?" DateFormat="yyyy-MM-dd" />
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label">Maliyet</label>
+                        <InputNumber class="form-control" @bind-Value="editModel.Cost" TValue="decimal?" />
+                    </div>
+                    <div class="col-12 col-sm-4 d-flex align-items-end justify-content-end">
+                        <div>
+                            <button type="submit" class="btn btn-primary me-2">Kaydet</button>
+                            <button type="button" class="btn btn-outline-secondary" @onclick="CancelEdit">Vazgeç</button>
+                        </div>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    }
+}
+
+@code {
+    private bool loading = true;
+    private string? error;
+    private AssetsFilter filter = new(
+    );
+    private AssetCreateModel createModel = new();
+    private Guid? editId;
+    private AssetEditModel? editModel;
+
+    private List<Asset> assets = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchAsync(null);
+    }
+    private void StartEdit(Asset a)
+    {
+        editId = a.Id; // Asset entity'nizde Id varsa
+        editModel = new AssetEditModel
+        {
+            Id = a.Id,
+            Tag = a.Tag,
+            Name = a.Name,
+            Category = a.Category,
+            Status = a.Status,
+            Location = a.Location,
+            PurchaseDate = a.PurchaseDate,
+            Cost = a.Cost
+        };
+
+
+    }
+    private void CancelEdit()
+    {
+        editId = null;
+        editModel = null;
+    }
+    private async Task OnSubmit()
+    {
+        await FetchAsync(filter);
+    }
+    private async Task CreateAsync()
+    {
+        var dto = new AssetCreateDto(
+        createModel.Tag,
+        createModel.Name,
+        createModel.Category,
+        createModel.Status,
+        createModel.Location,
+        createModel.PurchaseDate,
+        createModel.Cost
+        );
+
+        await Api.CreateAsset(dto);
+         await FetchAsync(filter);
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (editId is null || editModel is null) return;
+        var dto = new AssetUpdateDto(
+        editModel.Id, editModel.Tag, editModel.Name,
+        editModel.Category,
+        editModel.Status,
+        editModel.Location,
+        editModel.PurchaseDate,
+        editModel.Cost
+        );
+        await Api.UpdateAsset(dto);
+        editId = null;
+            editModel = null;
+            await FetchAsync(filter);
+    }
+
+    private async Task Delete(Asset asset)
+    {
+
+        try
+        {
+            await Api.DeleteAsset(asset.Id); // <-- Servis imzana göre güncelle
+            await FetchAsync(filter);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+    private async Task ClearFilters()
+    {
+        filter = new AssetsFilter();
+        await FetchAsync(null);
+    }
+
+    private async Task FetchAsync(AssetsFilter? f)
+    {
+        try
+        {
+            loading = true;
+            error = null;
+            assets = await Api.FetchAssets(f);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    public class AssetCreateModel
+    {
+        [Required] public string Tag { get; set; } = string.Empty;
+        [Required] public string Name { get; set; } = string.Empty;
+        public AssetCategory? Category { get; set; }
+        public AssetStatus? Status { get; set; }
+        public AssetLocation? Location { get; set; }
+        public DateTime? PurchaseDate { get; set; }
+        [Range(0, double.MaxValue, ErrorMessage = "Geçerli bir tutar giriniz")]
+        public decimal? Cost { get; set; }
+    }
+
+    public class AssetEditModel
+    {
+        [Required] public Guid Id { get; set; }
+        [Required] public string Tag { get; set; } = string.Empty;
+        [Required] public string Name { get; set; } = string.Empty;
+        public AssetCategory? Category { get; set; }
+        public AssetStatus? Status { get; set; }
+        public AssetLocation? Location { get; set; }
+        public DateTime? PurchaseDate { get; set; }
+        [Range(0, double.MaxValue, ErrorMessage = "Geçerli bir tutar giriniz")]
+        public decimal? Cost { get; set; }
+    }
+}
