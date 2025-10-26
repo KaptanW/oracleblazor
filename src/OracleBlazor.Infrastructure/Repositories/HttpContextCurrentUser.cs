@@ -16,11 +16,9 @@ public sealed class HttpContextCurrentUser : ICurrentUser
             var ctx = _http.HttpContext;
             if (ctx is null) return null;
 
-            // 1) Claim varsa önce onu kullan
             var claimId = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (!string.IsNullOrWhiteSpace(claimId)) return claimId;
 
-            // 2) Yoksa header'dan al (ör: X-User-Id)
             if (ctx.Request.Headers.TryGetValue("X-User-Id", out var headerId) && !string.IsNullOrWhiteSpace(headerId))
                 return headerId.ToString();
 
@@ -31,5 +29,5 @@ public sealed class HttpContextCurrentUser : ICurrentUser
 
 public sealed class NullCurrentUser : ICurrentUser
 {
-    public string? UserId => "MIGRATION"; // veya null
+    public string? UserId => "MIGRATION";
 }
