@@ -13,6 +13,7 @@ public static class LoggingExtensions
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Error)
             .Enrich.FromLogContext()
             .WriteTo.Console()
+            .WriteTo.File("logs/app-.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
             .CreateLogger();
 
         builder.Host.UseSerilog();
