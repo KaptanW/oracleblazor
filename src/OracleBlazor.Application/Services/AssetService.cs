@@ -24,7 +24,7 @@ namespace OracleBlazor.Application.Services
                 PurchaseDate = dto.PurchaseDate,
                 Cost = dto.Cost,
             };
-            await _repo.AddAsync(Asset);
+             await _repo.AddAsync(Asset);
              await _uow.SaveChangesAsync();
             return Asset;
         }

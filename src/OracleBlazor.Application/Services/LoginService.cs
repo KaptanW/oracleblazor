@@ -19,11 +19,12 @@ namespace OracleBlazor.Application.Services
             _repo = repo;
             _jwt = jwtOptions.Value;
         }
-
+//just for creating dummy users
         public Task<User> Create(CreateDto createDto)
         {
             return _repo.CreateAsync(createDto.Username, createDto.Password, createDto.RealName);
         }
+
 
         public async Task<string> Login(LoginDto loginDto)
         {

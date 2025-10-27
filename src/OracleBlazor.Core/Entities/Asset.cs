@@ -1,5 +1,6 @@
 namespace OracleBlazor.Core.Entities
 {
+    //dummy properties
    public class Asset : IEntity
     {
          public string Tag { get; set; } = default!;
