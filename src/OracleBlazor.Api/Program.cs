@@ -16,10 +16,11 @@ internal class Program
         builder.Services.AddSwagger();
         builder.AddJwt();
         builder.AddCors();
-        builder.AddLogger(); 
+        builder.AddLogger();
 
         builder.Services.AddAuthorization();
         builder.Services.AddControllers();
+
         var app = builder.Build();
         app.UseSwagger();
         app.UseSwaggerUI(c =>

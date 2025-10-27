@@ -1,27 +1,24 @@
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using OracleBlazor.Core.Auth;
 using Serilog;
 using Serilog.Events;
+using Serilog.Extensions.Hosting; // DiagnosticContext
 
-namespace OracleBlazor.Api.Builder
+public static class LoggingExtensions
 {
-    public static class Serilog
+    public static void AddLogger(this WebApplicationBuilder builder)
     {
-        public static void AddLogger(this WebApplicationBuilder builder)
-        {
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Information()
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-                .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Error)
-                .WriteTo.Console()
-                .WriteTo.File("logs/app-.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
-                .CreateLogger();
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .MinimumLevel.Override("Oracle.EntityFrameworkCore", LogEventLevel.Error)
+            .MinimumLevel.Override("Oracle.ManagedDataAccess.Core", LogEventLevel.Error)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Error)
+            .Enrich.FromLogContext()
+            .WriteTo.Console()
+            .CreateLogger();
 
-            builder.Host.UseSerilog();
-        }
+        builder.Host.UseSerilog();
 
+        builder.Services.AddSingleton<Serilog.ILogger>(Log.Logger);
+
+        builder.Services.AddSingleton<Serilog.IDiagnosticContext, DiagnosticContext>();
     }
 }
