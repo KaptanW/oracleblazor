@@ -21,13 +21,10 @@ public class AppDbContext : DbContext
         _currentUser = new NullCurrentUser();
     }
 
-    // DbSets
     public DbSet<Asset> Assets => Set<Asset>();
     public DbSet<User> Users => Set<User>();
     public DbSet<IP> AllowedIps => Set<IP>();
 
-    // --- GLOBAL CONVENTIONS ---
-    // EF Core 7+ : Tüm bool'lar NUMBER(1), tüm decimal'lar NUMBER(18,2)
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
         builder.Properties<bool>()
@@ -35,7 +32,7 @@ public class AppDbContext : DbContext
                .HaveColumnType("NUMBER(1)");
 
         builder.Properties<decimal>()
-               .HavePrecision(18, 2); // eşdeğeri: .HaveColumnType("NUMBER(18,2)")
+               .HavePrecision(18, 2); 
     }
 
     protected override void OnModelCreating(ModelBuilder b)
@@ -61,7 +58,6 @@ public class AppDbContext : DbContext
             e.Property(x => x.UpdatedBy).HasColumnType("RAW(16)");
         });
 
-        // ASSETS
         b.Entity<Asset>(e =>
         {
             e.ToTable("ASSETS");
@@ -69,7 +65,6 @@ public class AppDbContext : DbContext
             e.Property(x => x.Id)
              .HasColumnType("RAW(16)");
 
-            // Kolonlar
             e.Property(x => x.Tag).HasMaxLength(64).IsRequired();
             e.Property(x => x.Name).HasMaxLength(128).IsRequired();
 
@@ -89,7 +84,6 @@ public class AppDbContext : DbContext
              .HasDatabaseName("IX_ASSETS_CAT_LOC");
         });
 
-        // USERS (istersen APP_USERS yapabilirsin)
         b.Entity<User>(e =>
         {
             e.ToTable("USERS");
@@ -105,7 +99,6 @@ public class AppDbContext : DbContext
             e.Property(x => x.CreatedBy).HasColumnType("RAW(16)");
             e.Property(x => x.UpdatedBy).HasColumnType("RAW(16)");
 
-            // Bool'lar global convention'dan NUMBER(1) olur
         });
     }
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -159,8 +152,7 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseOracle(cs, o =>
             {
-                // Migration’ları bu assembly’de tutuyorsanız:
-                // o.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
+                
             })
             .Options;
 

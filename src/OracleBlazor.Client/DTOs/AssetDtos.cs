@@ -12,10 +12,10 @@ namespace OracleBlazor.Client.DTOs
         decimal? Cost);
 
     public record AssetUpdateDto(
-    Guid Id,
+        Guid Id,
         string Tag,
         string Name,
-               AssetCategory? Category,
+        AssetCategory? Category,
         AssetStatus? Status,
         AssetLocation? Location,
         DateTime? PurchaseDate,
